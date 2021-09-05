@@ -7,11 +7,13 @@ class Data():
 
     @staticmethod
     def group_by_country(dtf, country):
+        # make table
         dtf = dtf.drop(['Province/State','Lat','Long'], axis=1).groupby("Country/Region").sum().T
         dtf["World"] = dtf.sum(axis=1)
+        # filtering
         dtf = dtf[country]
         dtf.index = pd.to_datetime(dtf.index, infer_datetime_format=True)
-        ts = pd.DataFrame(index=dtf.index, data=dtf.values, columns=["data"])
+        ts =        pd.DataFrame(index=dtf.index, data=dtf.values, columns=["data"])
         return ts
   
     def process_data(self, country):

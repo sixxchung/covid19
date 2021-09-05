@@ -1,5 +1,7 @@
-# from folder.file import constant
-# from folder      import file
+# from FOLDER.FILE import CLASS
+# from FOLDER.FILE import CONSTANT
+# from FOLDER      import FILE
+
 from application.dash import app
 from settings         import config
 
