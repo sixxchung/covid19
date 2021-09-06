@@ -7,7 +7,7 @@ class Data():
 
     @staticmethod
     def group_by_country(dtf, country):
-        # make table
+        # make table aaa
         dtf = dtf.drop(['Province/State','Lat','Long'], axis=1).groupby("Country/Region").sum().T
         dtf["World"] = dtf.sum(axis=1)
         # filtering
