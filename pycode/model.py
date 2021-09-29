@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from scipy import optimize
 
-class Model():
+class MyModel():
     def __init__(self, dtf):
         self.dtf = dtf
     

@@ -1,31 +1,28 @@
 ###############################################################################
 #                                MAIN                                         #
 ###############################################################################
-
-### Setup 
 import dash
-
 
 import dash_bootstrap_components as dbc
 import dash_core_components      as dcc
 import dash_html_components      as html
 from dash.dependencies import Input, Output, State
 
-from python.data   import Data
-from python.model  import Model
-from python.result import Result
+from pycode.data   import MyData
+from pycode.model  import MyModel
+from pycode.result import MyResult
 
 from settings      import config, contents
 
 # Read data
-data = Data()
-data.get_data()   # data.dtf_cases, data.countrylist
+myData = MyData()
+myData.get_data()   # data.dtf_cases, data.countrylist
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 # App Instance
 app = dash.Dash(
     name = config.name, 
-    assets_folder = config.root+"/application/assets", 
+    assets_folder = config.root+"/apps/assets", 
     external_stylesheets = [
         dbc.themes.SLATE, 
         config.fontawesome,
@@ -75,19 +72,19 @@ navbar = dbc.Navbar(
         dbc.DropdownMenu( ## links
             label="Links", nav=True, 
             children=[
-                dbc.DropdownMenuItem([html.I(className="fa fa-linkedin"), "  Contacts"], href=config.contacts, target="_blank"), 
+                dbc.DropdownMenuItem([html.I(className="fa fa-"), "my Blog"], href=config.myBlog, target="_blank"), 
+                dbc.DropdownMenuItem([html.I(className="fa fa-github"),   "  Tutorial"], href=config.baseBlog, target="_blank"),
                 dbc.DropdownMenuItem([html.I(className="fa fa-github"),   "  Code"], href=config.code, target="_blank")
             ]
         )
     ]
 )
 
-
 # Input
 inputs = dbc.FormGroup([
     html.H5("Select Country"),
     dcc.Dropdown( id="country", 
-        options=[{"label":x, "value":x} for x in data.countrylist], 
+        options=[{"label":x, "value":x} for x in myData.countrylist], 
         value="World"
     )
 ])
@@ -114,14 +111,16 @@ app.layout = dbc.Container(fluid=True, children=[
             #    dbc.Tab(dcc.Graph(id="plot-active"), label="Active cases")
             #])
             dbc.Tabs(className="nav nav-pills", children=[
-                dbc.Tab(dcc.Graph(id="plot-total"),  label="Total cases"),
-                dbc.Tab(dcc.Graph(id="plot-active"), label="Active cases")
+                dbc.Tab(
+                    dcc.Graph(id="plot-total"),  label="Total cases"),
+                dbc.Tab(
+                    dcc.Graph(id="plot-active"), label="Active cases")
             ])
         ])
     ])
 ])
 
-'''
+
 #  navitem-popover
 @app.callback(
     output =  Output("about",       "is_open"), 
@@ -131,7 +130,7 @@ def about_popover(n, is_open):
     if n:
         return not is_open
     return is_open
-    
+
 @app.callback(
     output =  Output("about-popover", "active"), 
     inputs = [Input("about-popover", "n_clicks")], 
@@ -140,19 +139,22 @@ def about_active(n, active):
     if n:
         return not active
     return active
-    
+
 #  plot total cases
 @app.callback(
-    output= Output("plot-total","figure"), 
-    inputs=[Input("country","value")] ) 
+    output = Output("plot-total", "figure"), 
+    inputs = [Input("country", "value")] ) 
 def plot_total_cases(country):
-    data.process_data(country) 
-    model = Model(data.dtf)
+    myData.process_data(country) 
+    # myData.dtf
+    model = MyModel(myData.dtf)
     model.forecast()
     #model.add_deaths(data.mortality)
-    result = Result(model.dtf)
+    # model.dtf
+    result = MyResult(model.dtf)
     return result.plot_total(model.today)
-    
+
+'''     
 #  plot active cases
 @app.callback(
     output= Output("plot-active","figure"), 

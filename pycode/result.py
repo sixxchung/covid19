@@ -2,7 +2,7 @@ import pandas as pd
 import plotly.graph_objects as go
 
 
-class Result():
+class MyResult():
     def __init__(self, dtf):
         self.dtf = dtf
 

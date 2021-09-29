@@ -17,6 +17,7 @@ pd.set_option('display.max_columns', None)
 import seaborn as sns
 color = sns.color_palette()
 sns.set_style('darkgrid')
+import plotly.express as px
 import matplotlib.pyplot as plt
 # % matplotlib inline
 
