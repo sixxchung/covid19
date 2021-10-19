@@ -1,24 +1,40 @@
+import sys, os
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 ###############################################################################
 #                                MAIN                                         #
 ###############################################################################
 import dash
-
 import dash_bootstrap_components as dbc
 import dash_core_components      as dcc
 import dash_html_components      as html
+
+import dash_admin_components as dac
+
 from dash.dependencies import Input, Output, State
+from dash.exceptions import PreventUpdate
+
+from apps.uimodule.cards        import cards_tab
+from apps.uimodule.social_cards import social_cards_tab
+from apps.uimodule.tab_cards    import tab_cards_tab
+from apps.uimodule.basic_boxes  import basic_boxes_tab
+from apps.uimodule.value_boxes  import value_boxes_tab
+from apps.uimodule.tab_cards    import text_1, text_2, text_3
+from apps.uimodule.example_plots  import plot_scatter
 
 from pycode.data   import MyData
 from pycode.model  import MyModel
 from pycode.result import MyResult
 
-from settings      import config, contents
+from settings      import config, contents, style
+#from settings      import sixx, config, contents, style
 
 # Read data
 myData = MyData()
 myData.get_data()   # data.dtf_cases, data.countrylist
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+# =============================================================================
+# Dash App and Flask Server
+# =============================================================================
 # App Instance
 app = dash.Dash(
     name = config.name, 
@@ -26,9 +42,11 @@ app = dash.Dash(
     external_stylesheets = [
         dbc.themes.SLATE, 
         config.fontawesome,
-        external_stylesheets,
+        config.external_stylesheets,
     ]
 )
+server = app.server 
+
 app.title = config.name
 # dash.Dash( 
 #     name=None, server=True, eager_loading=False,
@@ -44,16 +62,35 @@ app.title = config.name
 #     **obsolete
 # )
 
-# Navbar
+### Navbar
+# right_ui = dac.NavbarDropdown(
+# 	badge_label = "!",
+#     badge_color= "danger",
+#     src = "https://quantee.ai",
+# 	header_text="2 Items",
+#     children= [
+# 		dac.NavbarDropdownItem(
+# 			children = "message 1",
+# 			date = "today"
+# 		),
+# 		dac.NavbarDropdownItem(
+# 			children = "message 2",
+# 			date = "yesterday"
+# 		),
+# 	]
+# )
 # dbc.Nav([
 #     dbc.NavItem(),
 #     dbc.NavItem(),
 #     dbc.DropdownMenu()
 # ])
+
+
 navbar = dbc.Navbar(
     className="nav nav-pills", 
     color="dark",
     dark=True,
+    #text="I can write text in the navbar!",
     children=[
         dbc.NavItem( ## logo/home
             html.Img(src=app.get_asset_url("logo_covid19.jpg"), height="40px")
@@ -80,6 +117,7 @@ navbar = dbc.Navbar(
     ]
 )
 
+
 # Input
 inputs = dbc.FormGroup([
     html.H5("Select Country"),
@@ -87,6 +125,37 @@ inputs = dbc.FormGroup([
         options=[{"label":x, "value":x} for x in myData.countrylist], 
         value="World"
     )
+])
+sidebar= html.Div(
+    [
+        html.H2('Parameters', style=style.TEXT),
+        html.Hr(),
+        #controls
+    ],
+    style=style.SIDEBAR,
+)
+
+analyBody = dbc.Row([
+    ### input + panel
+    dbc.Col(md=2, children=[
+        inputs, 
+        html.Br(),html.Br(),html.Br(),
+        html.Div(id="output-panel")
+    ]),
+    ### plots
+    dbc.Col(md=9, children=[
+        dbc.Col(html.H4("Forecast 30 days from today"), width={"size":4,"offset":8}), 
+        #dbc.Tabs([
+        #    dbc.Tab(dcc.Graph(id="plot-total"),  label="Total cases"),
+        #    dbc.Tab(dcc.Graph(id="plot-active"), label="Active cases")
+        #])
+        dbc.Tabs(className="nav nav-pills", children=[
+            dbc.Tab(
+                dcc.Graph(id="plot-total"),  label="Total cases"),
+            dbc.Tab(
+                dcc.Graph(id="plot-active"), label="Active cases")
+        ])
+    ])
 ])
 
 # App Layout
@@ -97,31 +166,19 @@ app.layout = dbc.Container(fluid=True, children=[
     html.Br(),#html.Br(),html.Br(),
     ## Body
     dbc.Row([
-        ### input + panel
-        dbc.Col(md=2, children=[
-            inputs, 
-            html.Br(),html.Br(),html.Br(),
-            html.Div(id="output-panel")
-        ]),
-        ### plots
-        dbc.Col(md=9, children=[
-            dbc.Col(html.H4("Forecast 30 days from today"), width={"size":4,"offset":8}), 
-            #dbc.Tabs([
-            #    dbc.Tab(dcc.Graph(id="plot-total"),  label="Total cases"),
-            #    dbc.Tab(dcc.Graph(id="plot-active"), label="Active cases")
-            #])
-            dbc.Tabs(className="nav nav-pills", children=[
-                dbc.Tab(
-                    dcc.Graph(id="plot-total"),  label="Total cases"),
-                dbc.Tab(
-                    dcc.Graph(id="plot-active"), label="Active cases")
-            ])
-        ])
+        html.Div([sidebar, analyBody])
+        # ### input + panel
+        # dbc.Col(md=2, children=[
+        #     sidebar
+        # ]),
+        # ### plots
+        # dbc.Col(md=9, children=[
+        # analyBody
+        # ])
     ])
 ])
 
-
-#  navitem-popover
+###  navitem-popover
 @app.callback(
     output =  Output("about",       "is_open"), 
     inputs = [Input("about-popover","n_clicks")], 
@@ -140,11 +197,12 @@ def about_active(n, active):
         return not active
     return active
 
-#  plot total cases
+### plot total cases
 @app.callback(
     output = Output("plot-total", "figure"), 
     inputs = [Input("country", "value")] ) 
 def plot_total_cases(country):
+    print(country)
     myData.process_data(country) 
     # myData.dtf
     model = MyModel(myData.dtf)
